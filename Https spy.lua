@@ -37,6 +37,28 @@ loadstring = function(source, chunkname)
     return old_loadstring(source, chunkname)
 end
 
+local function safeHttpGet(url)
+    local success, result = pcall(function()
+        if game:GetService("HttpService"):GetHttpEnabled() then
+            return game:HttpGet(url)
+        else
+            return "HTTP服务未启用"
+        end
+    end)
+    return success and result or "HTTP请求失败: " .. tostring(result)
+end
+
+local function safeHttpPost(url, data)
+    local success, result = pcall(function()
+        if game:GetService("HttpService"):GetHttpEnabled() then
+            return game:HttpPost(url, data)
+        else
+            return "HTTP服务未启用"
+        end
+    end)
+    return success and result or "HTTP请求失败: " .. tostring(result)
+end
+
 if game.HttpGet then
     local old_HttpGet = game.HttpGet
     game.HttpGet = function(self, url, ...)
@@ -63,9 +85,13 @@ if game.HttpPost then
     end
 end
 
+local player = game:GetService("Players").LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "沙脚本链接间谍"
-ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.Parent = playerGui
+ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 600, 0, 500)
@@ -254,7 +280,9 @@ local function createLogEntry(parent, data, index)
     linkLabel.Parent = logFrame
     
     logFrame.MouseButton1Click:Connect(function()
-        setclipboard(data.link)
+        if setclipboard then
+            setclipboard(data.link)
+        end
     end)
     
     return logFrame
@@ -315,3 +343,5 @@ CloseButton.MouseButton1Click:Connect(function()
 end)
 
 updateDisplay()
+
+print("沙脚本链接间谍已启动 - 监控Loadstring和HTTP请求")
